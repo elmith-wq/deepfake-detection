@@ -1,0 +1,17 @@
+﻿# Data and outputs (never commit these)
+data/
+outputs/
+*.mp4
+*.pth
+*.pt
+*.ckpt
+
+# Secrets
+kaggle.json
+.env
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+.venv/
