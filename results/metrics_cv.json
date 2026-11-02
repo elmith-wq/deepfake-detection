@@ -1,0 +1,9 @@
+{
+  "videos": 391,
+  "real_videos": 76,
+  "video_logloss": 0.2928,
+  "constant_baseline_logloss": 0.4925,
+  "video_auc": 0.9193,
+  "real_recall": 0.7105,
+  "fake_recall": 0.9619
+}

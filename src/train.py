@@ -43,11 +43,12 @@ def main():
     p.add_argument("--batch-size", type=int, default=32)
     p.add_argument("--lr", type=float, default=1e-4)
     p.add_argument("--workers", type=int, default=4)
+    p.add_argument("--fold", type=int, default=0)
     args = p.parse_args()
 
     device = "cuda" if torch.cuda.is_available() else "cpu"
     OUT.mkdir(exist_ok=True)
-    train_df, val_df = make_splits()
+    train_df, val_df = make_splits(fold=args.fold)
 
     train_dl = DataLoader(FaceDataset(train_df, train=True), args.batch_size,
                           shuffle=True, num_workers=args.workers, pin_memory=True)
@@ -62,9 +63,8 @@ def main():
 
     base = train_df.target.mean()
     const = log_loss(val_df.target, np.full(len(val_df), base))
-    print(f"Baseline (constant {base:.2f} prediction) crop log loss: {const:.3f}")
+    print(f"Fold {args.fold}: constant {base:.2f} prediction crop log loss: {const:.3f}")
 
-    best = float("inf")
     for epoch in range(1, args.epochs + 1):
         model.train()
         total = 0.0
@@ -82,11 +82,10 @@ def main():
         metrics, scored = evaluate(val_df, predict(model, val_dl, device))
         print(f"epoch {epoch}: train_loss={total / len(train_df):.4f} "
               + " ".join(f"{k}={v:.4f}" for k, v in metrics.items()))
-        if metrics["video_logloss"] < best:
-            best = metrics["video_logloss"]
-            torch.save(model.state_dict(), OUT / "best.pth")
-            scored.to_csv(OUT / "val_predictions.csv", index=False)
-            print("  saved best model")
+
+    # Use the final epoch only (no best-epoch picking on the validation set)
+    scored.to_csv(OUT / f"val_predictions_fold{args.fold}.csv", index=False)
+    torch.save(model.state_dict(), OUT / f"model_fold{args.fold}.pth")
 
 
 if __name__ == "__main__":
